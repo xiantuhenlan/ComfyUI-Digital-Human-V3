@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "pluginId": "comfyui-digital-human-v3",
+  "displayName": "闲兔数字人工作台 V3",
+  "version": "0.1.1",
+  "channel": "stable",
+  "repository": "https://github.com/xiantuhenlan/ComfyUI-Digital-Human-V3",
+  "updateManifestUrl": "https://raw.githubusercontent.com/xiantuhenlan/ComfyUI-Digital-Human-V3/main/plugin_manifest.json"
+}

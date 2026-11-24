@@ -1,0 +1,786 @@
+{
+  "id": "4c624ad9-ccc1-46b9-8612-501f9ce4ac32",
+  "revision": 0,
+  "last_node_id": 101,
+  "last_link_id": 17,
+  "nodes": [
+    {
+      "id": 21,
+      "type": "Echo_Sampler",
+      "pos": [
+        1130,
+        180
+      ],
+      "size": [
+        270,
+        246
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL_PIPE_E",
+          "link": 1
+        },
+        {
+          "name": "emb",
+          "type": "MODEL_EMB_E",
+          "link": 3
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            13
+          ]
+        },
+        {
+          "name": "frame_rate",
+          "type": "FLOAT",
+          "links": []
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Echo_Sampler"
+      },
+      "widgets_values": [
+        42,
+        "randomize",
+        6.0,
+        8,
+        16000,
+        12,
+        3,
+        false
+      ],
+      "widgets_values_named": {}
+    },
+    {
+      "id": 23,
+      "type": "Echo_Predata",
+      "pos": [
+        730,
+        0
+      ],
+      "size": [
+        357.8397521972656,
+        529.4112548828125
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "info",
+          "type": "MODEL_INFO_E",
+          "link": 2
+        },
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 4
+        },
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 5
+        },
+        {
+          "name": "clip",
+          "shape": 7,
+          "type": "CLIP",
+          "link": 11
+        },
+        {
+          "name": "clip_vision",
+          "shape": 7,
+          "type": "CLIP_VISION",
+          "link": 12
+        },
+        {
+          "name": "video_images",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "prompt",
+          "type": "STRING",
+          "widget": {
+            "name": "prompt"
+          },
+          "link": 6
+        },
+        {
+          "name": "width",
+          "type": "INT",
+          "widget": {
+            "name": "width"
+          },
+          "link": 7
+        },
+        {
+          "name": "height",
+          "type": "INT",
+          "widget": {
+            "name": "height"
+          },
+          "link": 8
+        },
+        {
+          "name": "fps",
+          "type": "FLOAT",
+          "widget": {
+            "name": "fps"
+          },
+          "link": 9
+        },
+        {
+          "name": "length",
+          "type": "INT",
+          "widget": {
+            "name": "length"
+          },
+          "link": 10
+        }
+      ],
+      "outputs": [
+        {
+          "name": "emb",
+          "type": "MODEL_EMB_E",
+          "links": [
+            3
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Echo_Predata"
+      },
+      "widgets_values": [
+        "a person  is speake",
+        " Gesture is bad. Gesture is unclear. Strange and twisted hands. Bad hands. Bad fingers. Unclear and blurry hands. 手部快速摆动, 手指频繁抽搐, 夸张手势, 重复机械性动作.",
+        "pose_01",
+        512,
+        768,
+        25,
+        0.1,
+        0.8,
+        251,
+        97,
+        false,
+        false
+      ],
+      "widgets_values_named": {}
+    },
+    {
+      "id": 20,
+      "type": "Echo_LoadModel",
+      "pos": [
+        350,
+        360
+      ],
+      "size": [
+        270,
+        270
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "model",
+          "type": "MODEL_PIPE_E",
+          "links": [
+            1
+          ]
+        },
+        {
+          "name": "info",
+          "type": "MODEL_INFO_E",
+          "links": [
+            2
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Echo_LoadModel"
+      },
+      "widgets_values": [
+        "Wan2.1_VAE.pth",
+        "None",
+        true,
+        "audio_drived",
+        true,
+        true,
+        true,
+        "None",
+        "V3_flash"
+      ],
+      "widgets_values_named": {
+        "vae": "Wan2.1_VAE.pth",
+        "lora": "None",
+        "denoising": true,
+        "infer_mode": "audio_drived",
+        "lowvram": true,
+        "teacache_offload": true,
+        "block_offload": true,
+        "use_mmgp": "None",
+        "version": "V3_flash"
+      }
+    },
+    {
+      "id": 15,
+      "type": "CLIPVisionLoader",
+      "pos": [
+        350,
+        190
+      ],
+      "size": [
+        270,
+        58
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "CLIP_VISION",
+          "type": "CLIP_VISION",
+          "links": [
+            12
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CLIPVisionLoader"
+      },
+      "widgets_values": [
+        "CLIP-ViT-H-14-laion2B-s32B-b79K.safetensors"
+      ],
+      "widgets_values_named": {
+        "clip_name": "CLIP-ViT-H-14-laion2B-s32B-b79K.safetensors"
+      }
+    },
+    {
+      "id": 5,
+      "type": "CLIPLoader",
+      "pos": [
+        350,
+        0
+      ],
+      "size": [
+        270,
+        106
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "CLIP",
+          "type": "CLIP",
+          "links": [
+            11
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CLIPLoader"
+      },
+      "widgets_values": [
+        "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+        "wan",
+        "cpu"
+      ],
+      "widgets_values_named": {
+        "clip_name": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+        "type": "wan",
+        "device": "cpu"
+      }
+    },
+    {
+      "id": 100,
+      "type": "XiantuDigitalHumanMediaV3",
+      "title": "闲兔｜数字人工作台 V3 · echomimic_flash",
+      "pos": [
+        0,
+        200
+      ],
+      "size": [
+        280,
+        230
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "project_id",
+          "type": "STRING",
+          "widget": {
+            "name": "project_id"
+          },
+          "link": null
+        },
+        {
+          "name": "segment_index",
+          "type": "INT",
+          "widget": {
+            "name": "segment_index"
+          },
+          "link": null
+        },
+        {
+          "name": "model_profile",
+          "type": "COMBO",
+          "widget": {
+            "name": "model_profile"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "参考图",
+          "type": "IMAGE",
+          "links": [
+            4
+          ]
+        },
+        {
+          "name": "原音频",
+          "type": "AUDIO",
+          "links": [
+            5,
+            14
+          ]
+        },
+        {
+          "name": "提示词",
+          "type": "STRING",
+          "links": [
+            6
+          ]
+        },
+        {
+          "name": "宽度",
+          "type": "INT",
+          "links": [
+            7
+          ]
+        },
+        {
+          "name": "高度",
+          "type": "INT",
+          "links": [
+            8
+          ]
+        },
+        {
+          "name": "帧率",
+          "type": "FLOAT",
+          "links": [
+            9,
+            15
+          ]
+        },
+        {
+          "name": "帧数",
+          "type": "INT",
+          "links": [
+            10
+          ]
+        },
+        {
+          "name": "文件名",
+          "type": "STRING",
+          "links": [
+            17
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "XiantuDigitalHumanMediaV3"
+      },
+      "widgets_values": [
+        "",
+        0,
+        "echomimic_flash"
+      ],
+      "widgets_values_named": {
+        "project_id": "",
+        "segment_index": 0,
+        "model_profile": "echomimic_flash"
+      }
+    },
+    {
+      "id": 24,
+      "type": "CreateVideo",
+      "pos": [
+        1510,
+        180
+      ],
+      "size": [
+        320,
+        190
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "图像",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 13
+        },
+        {
+          "localized_name": "音频",
+          "name": "audio",
+          "shape": 7,
+          "type": "AUDIO",
+          "link": 14
+        },
+        {
+          "localized_name": "帧率",
+          "name": "fps",
+          "type": "FLOAT",
+          "widget": {
+            "name": "fps"
+          },
+          "link": 15
+        },
+        {
+          "localized_name": "bit_depth",
+          "name": "bit_depth",
+          "shape": 7,
+          "type": "COMBO",
+          "widget": {
+            "name": "bit_depth"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "color_space",
+          "name": "color_space",
+          "shape": 7,
+          "type": "COMBO",
+          "widget": {
+            "name": "color_space"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "chroma_subsampling",
+          "name": "chroma_subsampling",
+          "shape": 7,
+          "type": "COMBO",
+          "widget": {
+            "name": "chroma_subsampling"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "codec",
+          "name": "codec",
+          "shape": 7,
+          "type": "COMBO",
+          "widget": {
+            "name": "codec"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "视频",
+          "name": "VIDEO",
+          "type": "VIDEO",
+          "links": [
+            16
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.45.5",
+        "Node name for S&R": "CreateVideo"
+      },
+      "widgets_values": [
+        25,
+        "auto",
+        "sRGB",
+        "auto",
+        "none"
+      ],
+      "widgets_values_named": {
+        "fps": 25,
+        "bit_depth": "auto",
+        "color_space": "sRGB",
+        "chroma_subsampling": "auto",
+        "codec": "none"
+      }
+    },
+    {
+      "id": 25,
+      "type": "SaveVideo",
+      "pos": [
+        1870,
+        180
+      ],
+      "size": [
+        360,
+        300
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "视频",
+          "name": "video",
+          "type": "VIDEO",
+          "link": 16
+        },
+        {
+          "localized_name": "文件名前缀",
+          "name": "filename_prefix",
+          "type": "STRING",
+          "widget": {
+            "name": "filename_prefix"
+          },
+          "link": 17
+        },
+        {
+          "localized_name": "格式",
+          "name": "format",
+          "type": "COMFY_DYNAMICCOMBO_V3",
+          "widget": {
+            "name": "format"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "编解码器",
+          "name": "format.codec",
+          "type": "COMFY_DYNAMICCOMBO_V3",
+          "widget": {
+            "name": "format.codec"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "编码器",
+          "name": "codec",
+          "shape": 7,
+          "type": "COMFY_DYNAMICCOMBO_V3",
+          "widget": {
+            "name": "codec"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "video",
+          "name": "video",
+          "type": "VIDEO",
+          "links": []
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.45.5",
+        "Node name for S&R": "SaveVideo"
+      },
+      "widgets_values": [
+        "video/RelayVSR",
+        "auto",
+        "auto",
+        "auto"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "video/RelayVSR",
+        "format": "auto",
+        "format.codec": "auto",
+        "codec": "auto"
+      }
+    },
+    {
+      "id": 101,
+      "type": "MarkdownNote",
+      "pos": [
+        0,
+        -250
+      ],
+      "size": [
+        990,
+        380
+      ],
+      "flags": {},
+      "mode": 0,
+      "order": 0,
+      "properties": {},
+      "widgets_values": [
+        "EchoMimicV3 Flash · 本地 1.3B / 8步\n打开数字人 V3，上传一张人像和音频，填写当前分镜提示词，然后开始生成。原 H3 项目不变。\n建议先测约3秒、0.3~0.4MP、25FPS。块卸载开启，mmgp关闭，不要求安装FlashAttention。\n帧数从当前音频分镜自动取得，原声直送 CreateVideo。尺寸来自工作台。\n社区插件：ComfyUI_EchoMimic；模型位于 models/echo_mimic，并复用 Wan UMT5 和 CLIP-Vision。\n输出目录：数字人V3/EchoMimicV3-Flash/放大前。"
+      ]
+    }
+  ],
+  "links": [
+    [
+      1,
+      20,
+      0,
+      21,
+      0,
+      "MODEL_PIPE_E"
+    ],
+    [
+      2,
+      20,
+      1,
+      23,
+      0,
+      "MODEL_INFO_E"
+    ],
+    [
+      3,
+      23,
+      0,
+      21,
+      1,
+      "MODEL_EMB_E"
+    ],
+    [
+      4,
+      100,
+      0,
+      23,
+      1,
+      "IMAGE"
+    ],
+    [
+      5,
+      100,
+      1,
+      23,
+      2,
+      "AUDIO"
+    ],
+    [
+      6,
+      100,
+      2,
+      23,
+      6,
+      "STRING"
+    ],
+    [
+      7,
+      100,
+      3,
+      23,
+      7,
+      "INT"
+    ],
+    [
+      8,
+      100,
+      4,
+      23,
+      8,
+      "INT"
+    ],
+    [
+      9,
+      100,
+      5,
+      23,
+      9,
+      "FLOAT"
+    ],
+    [
+      10,
+      100,
+      6,
+      23,
+      10,
+      "INT"
+    ],
+    [
+      11,
+      5,
+      0,
+      23,
+      3,
+      "CLIP"
+    ],
+    [
+      12,
+      15,
+      0,
+      23,
+      4,
+      "CLIP_VISION"
+    ],
+    [
+      13,
+      21,
+      0,
+      24,
+      0,
+      "IMAGE"
+    ],
+    [
+      14,
+      100,
+      1,
+      24,
+      1,
+      "AUDIO"
+    ],
+    [
+      15,
+      100,
+      5,
+      24,
+      2,
+      "FLOAT"
+    ],
+    [
+      16,
+      24,
+      0,
+      25,
+      0,
+      "VIDEO"
+    ],
+    [
+      17,
+      100,
+      7,
+      25,
+      1,
+      "STRING"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.65,
+      "offset": [
+        140,
+        300
+      ]
+    }
+  },
+  "version": 0.4
+}

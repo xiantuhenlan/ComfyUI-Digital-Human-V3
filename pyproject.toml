@@ -1,0 +1,16 @@
+[project]
+name = "comfyui-digital-human-v3"
+version = "0.1.1"
+description = "Independent MiniMax H3 digital-human workbench with audio editing, per-shot references and prompts, local optimization, portable projects and video output management."
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+dependencies = ["soundfile", "imageio-ffmpeg"]
+
+[project.urls]
+Repository = "https://github.com/xiantuhenlan/ComfyUI-Digital-Human-V3"
+"Bug Tracker" = "https://github.com/xiantuhenlan/ComfyUI-Digital-Human-V3/issues"
+
+[tool.comfy]
+PublisherId = "xiantuhenlan"
+DisplayName = "闲兔数字人工作台 V3"
