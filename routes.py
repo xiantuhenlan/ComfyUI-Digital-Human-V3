@@ -20,6 +20,7 @@ from .storage import (
     create_project,
     project_dir,
     read_state,
+    reference_records,
     safe_media,
     save_state,
     save_state_preserving_generated_prompts,
@@ -335,8 +336,9 @@ async def upload_refs(request):
         index = int(values.get("segment_index", 0))
         state = read_state(project_id)
         segment = state["segments"][index]
-        target_refs = segment.setdefault("refs", [])
-        total_refs = len(target_refs)
+        scope = values.get("reference_scope")
+        target_refs = reference_records(state, segment, None if scope is None else scope == "global")
+        total_refs = len(reference_records(state, segment))
         if total_refs >= 9:
             raise ValueError("当前分镜最多上传 9 张参考图")
         directory = project_dir(project_id) / "refs"
@@ -413,6 +415,7 @@ async def delete_assets(request):
             for item in segment.get("refs") or []
             if isinstance(item, dict) and item.get("path")
         }
+        referenced_paths.update(str(item["path"]) for item in state.get("global_refs") or [] if isinstance(item, dict) and item.get("path"))
         asset_root = (project_dir(project_id) / "assets").resolve()
         for item in removed:
             path = project_dir(project_id) / str(item.get("path") or "")
@@ -462,6 +465,8 @@ async def shared_library(request):
         imported = _remember_shared_imports(project_id, [item["path"] for segment in state.get("segments") or []
                                                        for item in segment.get("refs") or []
                                                        if item.get("shared_asset_id") and item.get("path")])
+        imported = _remember_shared_imports(project_id, [item["path"] for item in state.get("global_refs") or []
+                                                       if item.get("shared_asset_id") and item.get("path")])
         for item in state.get("assets") or []:
             relative = str(item.get("path") or "")
             if relative in imported:
@@ -496,12 +501,15 @@ async def shared_library_apply(request):
         payload = await request.json()
         state = read_state(project_id)
         index = int(payload.get("segment_index", state.get("selected_segment", 0)))
-        refs = state["segments"][index].setdefault("refs", [])
-        known = {str(item.get("shared_asset_id") or "") for item in refs}
+        scope = payload.get("reference_scope")
+        refs = reference_records(state, state["segments"][index], None if scope is None else scope == "global")
+        effective_refs = reference_records(state, state["segments"][index])
+        known = {str(item.get("shared_asset_id") or "") for item in effective_refs}
+        effective_count = len(effective_refs)
         directory = project_dir(project_id) / "refs"
         directory.mkdir(exist_ok=True)
         for asset_id in payload.get("asset_ids") or []:
-            if str(asset_id) in known or len(refs) >= 9:
+            if str(asset_id) in known or effective_count >= 9:
                 continue
             source, item = await asyncio.to_thread(asset_source, asset_id)
             if not item["mimeType"].startswith("image/"):
@@ -511,6 +519,7 @@ async def shared_library_apply(request):
             refs.append({"name": item["name"], "path": target.relative_to(project_dir(project_id)).as_posix(),
                          "shared_asset_id": item["id"]})
             known.add(item["id"])
+            effective_count += 1
         state["selected_segment"] = index
         _remember_shared_imports(project_id, [item["path"] for item in refs if item.get("shared_asset_id")])
         return ok(project=save_state(state))

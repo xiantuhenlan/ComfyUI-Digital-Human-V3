@@ -1,11 +1,12 @@
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
 import { installDirectorTools } from "./digital_human_v3_tools.js";
+import { referenceImages, isReferenceGlobal, setReferenceGlobal, removeReferenceImage } from "./digital_human_v3_references.js";
 
 if (!document.querySelector("link[data-xiantu-dhv3-fresh-style]")) {
     const link = document.createElement("link");
     link.rel = "stylesheet";
-link.href = new URL("./digital_human_v3.css?v=20261122-shared-duration1", import.meta.url).href;
+link.href = new URL("./digital_human_v3.css?v=20261125-per-image-global2", import.meta.url).href;
     link.dataset.xiantuDhv3FreshStyle = "1";
     document.head.append(link);
 }
@@ -179,6 +180,7 @@ function studio(node) {
     let cleanupController = null;
     let libraryAssets = null, assetCategories = [], libraryLoading = false;
     let assetMode = false, assetFiles = [], assetCategory = "all", assetTargetSegmentIndex = 0, pendingRefSegmentIndex = 0;
+    let referenceScopeSaving = false;
     const refFields = {current:"refs"};
     const refLabels = {current:"当前分镜参考图"};
     const projectWidget = node.widgets?.find(w => w.name === "project_id");
@@ -297,7 +299,7 @@ function studio(node) {
         }
         drawWave();
     };
-    const refsFor = () => selected()?.refs || [];
+    const refsFor = () => referenceImages(state);
     const promptAssets = () => Object.keys(refFields).flatMap(kind => refsFor(kind));
     const makePromptImage = (token, record) => {
         const chip=document.createElement("span");chip.className="dh3-inline-image";chip.contentEditable="false";chip.dataset.token=token;chip.title=`${token} · ${record?.name||"参考图"}`;
@@ -399,10 +401,21 @@ function studio(node) {
         const records = refsFor();
         const box = $(root, "[data-thumbs]");
         const all=promptAssets();
-        box.innerHTML = records.map((ref,index)=>{const tokenIndex=all.indexOf(ref)+1;return `<figure data-insert-ref="${index}" title="点击插入 <image${tokenIndex}>"><img src="${media(ref.path)}"><figcaption><b>&lt;image${tokenIndex}&gt;</b> ${esc(ref.name)}</figcaption><button data-remove-ref="${index}">×</button></figure>`;}).join("");
+        box.innerHTML = records.map((ref,index)=>{const tokenIndex=all.indexOf(ref)+1,globalScope=isReferenceGlobal(state,ref);const removeLabel=globalScope?`从全部分镜移除参考图 ${index+1}`:`删除当前分镜参考图 ${index+1}`;return `<figure data-insert-ref="${index}" title="点击插入 <image${tokenIndex}>"><div class="dh3-ref-image"><img src="${media(ref.path)}"><label class="dh3-ref-global" title="勾选后所有分镜共用这张图；取消后仅保留已有的分镜引用"><input type="checkbox" data-ref-global="${index}" ${globalScope?"checked":""} ${referenceScopeSaving?"disabled":""}>全局</label><button type="button" class="dh3-ref-remove" data-remove-ref="${index}" title="${removeLabel}" aria-label="${removeLabel}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 10v7M14 10v7"/></svg></button></div><figcaption><b>&lt;image${tokenIndex}&gt;</b> ${esc(ref.name)}</figcaption></figure>`;}).join("");
         const drop=$(root,"[data-ref-drop]");drop.classList.toggle("has-images",!!records.length);drop.querySelector(":scope > b").textContent=`点击上传${refLabels.current}`;
-        $$ (box,"[data-insert-ref]").forEach(card=>card.onclick=event=>{if(event.target.closest("button"))return;const record=records[Number(card.dataset.insertRef)];insertPromptImage(all.indexOf(record));});
-        $$ (box, "[data-remove-ref]").forEach(btn => btn.onclick = async event => { event.stopPropagation(); records.splice(Number(btn.dataset.removeRef),1); await save(); renderThumbs(); renderPrompt(); });
+        $$ (box,"[data-insert-ref]").forEach(card=>card.onclick=event=>{if(event.target.closest("button,label,input"))return;const record=records[Number(card.dataset.insertRef)];insertPromptImage(all.indexOf(record));});
+        $$ (box,"[data-ref-global]").forEach(input=>{input.onpointerdown=event=>event.stopPropagation();input.onclick=event=>event.stopPropagation();input.onchange=event=>{event.stopPropagation();changeReferenceScope(Number(input.dataset.refGlobal),input.checked);};});
+        $$ (box, "[data-remove-ref]").forEach(btn => {
+            btn.onpointerdown=event=>event.stopPropagation();
+            btn.onclick=async event=>{event.preventDefault();event.stopPropagation();removeReferenceImage(state,Number(btn.dataset.removeRef));renderThumbs();renderPrompt();await save();};
+        });
+    }
+    async function changeReferenceScope(index,enabled) {
+        if (!state || referenceScopeSaving) return;
+        const previousRefs=structuredClone(state.global_refs||[]), previousLocal=new Map(state.segments.map(segment=>[segment.id,structuredClone(segment.refs||[])]));let applied=false;
+        try { setReferenceGlobal(state,index,enabled);applied=true;referenceScopeSaving=true;renderThumbs();renderPrompt();await save({throwOnError:true}); }
+        catch(error) { state.global_refs=previousRefs;state.segments.forEach(segment=>{if(previousLocal.has(segment.id))segment.refs=previousLocal.get(segment.id);});if(!applied)notify(error.message,true); }
+        finally { referenceScopeSaving=false;renderThumbs();renderPrompt(); }
     }
     function renderAssetLibrary() {
         const grid=$(root,"[data-asset-grid]"), empty=$(root,"[data-asset-empty]"),tabs=$(root,".dh3-asset-tabs");
@@ -827,8 +840,8 @@ function studio(node) {
         catch(error){notify(error.message,true);}
     }
     async function uploadRefs(files, targetIndex=pendingRefSegmentIndex) {
-        if(!files.length)return;const lockedIndex=Math.max(0,Math.min(Number(targetIndex)||0,state.segments.length-1));notify(`正在上传${refLabels.current}…`);const form=new FormData();form.append("segment_index",String(lockedIndex));form.append("kind","current");[...files].slice(0,9).forEach((file,i)=>form.append(`file_${i}`,file,file.name));
-        try{const data=await jsonFetch(endpoint(state,"/refs"),{method:"POST",body:form});state=data.project;state.selected_segment=lockedIndex;syncWidgets();await save();render();notify(`参考图已上传到分镜 ${lockedIndex+1}`);}catch(error){notify(error.message,true);}
+        if(!files.length)return;const lockedIndex=Math.max(0,Math.min(Number(targetIndex)||0,state.segments.length-1));notify(`正在上传${refLabels.current}…`);const form=new FormData();form.append("segment_index",String(lockedIndex));form.append("kind","current");form.append("reference_scope","segment");[...files].slice(0,9).forEach((file,i)=>form.append(`file_${i}`,file,file.name));
+        try{await save({throwOnError:true});const data=await jsonFetch(endpoint(state,"/refs"),{method:"POST",body:form});state=data.project;state.selected_segment=lockedIndex;syncWidgets();await save();render();notify("参考图已上传到分镜 "+(lockedIndex+1));}catch(error){notify(error.message,true);}
     }
     async function init() {
         try {
@@ -887,7 +900,7 @@ function studio(node) {
     waveWrap.ondragover=event=>{event.preventDefault();if(event.dataTransfer)event.dataTransfer.dropEffect="copy";waveWrap.classList.add("is-audio-dragover");};
     waveWrap.ondragleave=event=>{if(!waveWrap.contains(event.relatedTarget))waveWrap.classList.remove("is-audio-dragover");};
     waveWrap.ondrop=async event=>{event.preventDefault();waveWrap.classList.remove("is-audio-dragover");const file=draggedAudio(event.dataTransfer);if(!file)return notify("请拖入有效的音频文件",true);await uploadAudio(file,selectedAudioTrack()?"replace":"add");};
-    const refFile=nativeFileInput("image/png,image/jpeg,image/webp",true,"data-ref-file");$(root,"[data-ref-drop]").onclick=event=>{if(event.target.closest("figure,button"))return;pendingRefSegmentIndex=state.selected_segment;refFile.click();};refFile.onchange=()=>{const files=[...(refFile.files||[])];refFile.value="";uploadRefs(files,pendingRefSegmentIndex);};
+    const refFile=nativeFileInput("image/png,image/jpeg,image/webp",true,"data-ref-file");$(root,"[data-ref-drop]").onclick=event=>{if(event.target.closest("figure,button,label,input"))return;pendingRefSegmentIndex=state.selected_segment;refFile.click();};refFile.onchange=()=>{const files=[...(refFile.files||[])];refFile.value="";uploadRefs(files,pendingRefSegmentIndex);};
     const assetDialog=$(root,"[data-asset-dialog]"),assetGrid=$(root,"[data-asset-grid]"),assetFilesInput=nativeFileInput("image/png,image/jpeg,image/webp",true,"data-asset-files");
     assetFilesInput.onchange=async()=>{await useAssetFiles(assetFilesInput.files||[]);assetFilesInput.value="";};
     $(root,"[data-ref-current]").onclick=()=>{assetDialog.hidden=true;};$(root,"[data-ref-library]").onclick=async()=>{assetTargetSegmentIndex=state.selected_segment;assetMode=true;assetDialog.hidden=false;try{await loadAssetLibrary();}catch(error){notify(`读取公共资产库失败：${error.message}`,true);}};
@@ -897,7 +910,7 @@ function studio(node) {
     $(root,"[data-asset-select-all]").onclick=()=>{assetFiles.filter(item=>assetCategory==="all"||(item.category||"other")===assetCategory).forEach(item=>item.selected=true);renderAssetLibrary();};
     $(root,"[data-asset-select-none]").onclick=()=>{assetFiles.filter(item=>assetCategory==="all"||(item.category||"other")===assetCategory).forEach(item=>item.selected=false);renderAssetLibrary();};
     $(root,"[data-asset-delete]").onclick=async()=>{const ids=assetFiles.filter(item=>item.selected).map(item=>item.id);if(!ids.length)return notify("请先选择要删除的资产",true);if(!window.confirm("从公共资产库删除选中图片？其他导演台的资产库也会同步删除，已经应用到分镜的参考图会保留。"))return;try{const data=await libraryPost("delete",{asset_ids:ids});await loadAssetLibrary();notify(`已删除 ${data.deleted||0} 个资产`);}catch(error){notify(error.message,true);}};
-    $(root,"[data-asset-apply]").onclick=async()=>{const chosen=assetFiles.filter(item=>item.selected);if(!chosen.length)return notify("请先在资产库勾选图片",true);if((state.segments[assetTargetSegmentIndex]?.refs||[]).length>=9)return notify("目标分镜已经有 9 张参考图",true);try{await save({throwOnError:true});const data=await libraryPost("apply",{asset_ids:chosen.map(item=>item.id),segment_index:assetTargetSegmentIndex});state=data.project;assetFiles.forEach(item=>item.selected=false);assetDialog.hidden=true;syncWidgets();render();notify(`已把资产应用到分镜 ${assetTargetSegmentIndex+1}`);}catch(error){notify(error.message,true);}};
+    $(root,"[data-asset-apply]").onclick=async()=>{const chosen=assetFiles.filter(item=>item.selected);if(!chosen.length)return notify("请先在资产库勾选图片",true);if(referenceImages(state,assetTargetSegmentIndex).length>=9)return notify("目标分镜已经有 9 张参考图",true);try{await save({throwOnError:true});const data=await libraryPost("apply",{asset_ids:chosen.map(item=>item.id),segment_index:assetTargetSegmentIndex,reference_scope:"segment"});state=data.project;assetFiles.forEach(item=>item.selected=false);assetDialog.hidden=true;syncWidgets();render();notify(`已把资产应用到分镜 ${assetTargetSegmentIndex+1}`);}catch(error){notify(error.message,true);}};
     const bindImageDrop=(element,handler)=>{element.ondragenter=event=>{if(!imageFiles(event.dataTransfer?.files).length&&![...(event.dataTransfer?.items||[])].some(item=>item.kind==="file"&&String(item.type||"").startsWith("image/")))return;event.preventDefault();element.classList.add("is-image-dragover");};element.ondragover=event=>{event.preventDefault();if(event.dataTransfer)event.dataTransfer.dropEffect="copy";element.classList.add("is-image-dragover");};element.ondragleave=event=>{if(!element.contains(event.relatedTarget))element.classList.remove("is-image-dragover");};element.ondrop=async event=>{event.preventDefault();element.classList.remove("is-image-dragover");await handler(imageFiles(event.dataTransfer?.files));};};
     bindImageDrop($(root,"[data-ref-drop]"),files=>uploadRefs(files,state.selected_segment));
     bindImageDrop(assetGrid,files=>useAssetFiles(files));
@@ -906,6 +919,7 @@ function studio(node) {
     $(root,"[data-clear]").onclick=async()=>{
         state.segments=[{id:crypto.randomUUID().replaceAll("-","").slice(0,12),name:"分镜 01",start:0,end:0,refs:[],original_prompt:"",optimized_prompt:""}];
         state.selected_segment=0;
+        state.global_refs=[];state.settings.reference_global=false;
         state.audio=null;state.audio_tracks=[];state.audio_cuts=[];
         state.selected_audio_track=0;state.duration=0;state.sample_rate=0;
         ++audioSeekToken;audioSeeking=false;pinnedTime=0;selectedCutIndex=-1;

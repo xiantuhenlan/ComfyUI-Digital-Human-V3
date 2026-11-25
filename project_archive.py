@@ -14,13 +14,14 @@ import time
 import uuid
 import zipfile
 
-from .storage import ROOT, normalize_state, project_dir, read_state, safe_media
+from .storage import ROOT, normalize_state, project_dir, read_state, safe_media, reference_records
 
 
 FORMAT = "xiantu-digital-human-v3"
 
 
 def _records(state):
+    yield from ((item, "refs") for item in state.get("global_refs") or [])
     for scene in state.get("segments") or []:
         yield from ((item, "refs") for item in scene.get("refs") or [])
     yield from ((item, "audio") for item in state.get("audio_tracks") or [])
@@ -41,6 +42,7 @@ def _name(value):
 def write_project_archive(project_id, target, function_marks=None):
     state = copy.deepcopy(read_state(project_id))
     used_refs = {item["path"] for scene in state["segments"] for item in scene.get("refs") or []}
+    used_refs.update(item["path"] for item in state.get("global_refs") or [])
     state["assets"] = [item for item in state.get("assets") or [] if item.get("path") in used_refs]
     state["results"] = []
     files, paths, content = [], {}, {}
@@ -73,14 +75,14 @@ def write_project_archive(project_id, target, function_marks=None):
             start, end = float(scene.get("start") or 0), float(scene.get("end") or 0)
             writer.writerow([index, scene.get("name", ""), round(start, 3), round(end, 3), round(end-start, 3),
                              scene.get("original_prompt", ""), scene.get("optimized_prompt", ""),
-                             "\n".join(item["path"] for item in scene.get("refs") or [])])
+                             "\n".join(item["path"] for item in reference_records(state, scene))])
         archive.writestr("分镜提示词.csv", table.getvalue().encode("utf-8-sig"))
         archive.writestr("项目.json", json.dumps({"format": FORMAT, "version": 1, "project": state,
                             "files": files, "function_marks": function_marks or {}}, ensure_ascii=False, indent=2))
         archive.writestr("使用说明.txt", "在数字人V3点击“导入项目”，选择整个 ZIP，可恢复分镜、两版提示词、参考图、原音频和项目设置。\n"
                          "导入会创建新项目，原项目和已生成的视频保留。项目包不包含生成视频及未应用的公共资产库素材。\n"
                          "分镜提示词.csv 用于查看；参考图、音频可单独取用。标记按当前工作流中匹配的节点恢复。\n")
-    return {"segments": len(state["segments"]), "references": sum(len(s.get("refs") or []) for s in state["segments"]),
+    return {"segments": len(state["segments"]), "references": sum(len(reference_records(state, s)) for s in state["segments"]),
             "files": len(files)}
 
 

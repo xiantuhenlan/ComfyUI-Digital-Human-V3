@@ -95,8 +95,32 @@ def read_state(project_id: str) -> dict:
         return normalize_state(json.loads(path.read_text(encoding="utf-8")))
 
 
+def reference_records(state: dict, segment: dict, global_scope=None) -> list:
+    """Read local plus per-image global refs; explicit scope returns an editable list."""
+    settings = state.setdefault("settings", {})
+    if not isinstance(state.get("global_refs"), list):
+        state["global_refs"] = []
+    if state.get("reference_scope_version") != 2:
+        enabled = bool(settings.get("reference_global", False))
+        state["global_refs"] = [{**ref, "is_global": enabled} for ref in state["global_refs"]]
+        state["reference_scope_version"] = 2
+        settings["reference_global"] = False
+    if not isinstance(segment.get("refs"), list):
+        segment["refs"] = []
+    if global_scope is not None:
+        return state["global_refs"] if global_scope else segment["refs"]
+    refs, seen = [], set()
+    for ref in [*segment["refs"], *(item for item in state["global_refs"] if item.get("is_global", True))]:
+        key = ("shared", ref["shared_asset_id"]) if ref.get("shared_asset_id") else ("path", ref.get("path", ""))
+        if key not in seen:
+            seen.add(key)
+            refs.append(ref)
+    return refs
+
+
 def normalize_state(state: dict) -> dict:
     """Upgrade legacy single-audio projects without invalidating their workflows."""
+    reference_records(state, {})
     tracks = state.get("audio_tracks")
     if not isinstance(tracks, list):
         tracks = []
@@ -153,7 +177,7 @@ def normalize_state(state: dict) -> dict:
         })
     # Migrate references already stored in the project into the persistent
     # library. Browser-only files that were never uploaded cannot be recovered.
-    for segment in state.get("segments") or []:
+    for segment in [{"refs": state.get("global_refs") or []}, *(state.get("segments") or [])]:
         for item in segment.get("refs") or []:
             if not isinstance(item, dict) or not item.get("path"):
                 continue
@@ -185,6 +209,9 @@ def normalize_state(state: dict) -> dict:
     elif not cleaned:
         state["duration"] = 0.0
     state.setdefault("settings", {})
+    state["settings"].setdefault("reference_global", False)
+    if not isinstance(state.get("global_refs"), list):
+        state["global_refs"] = []
     state["settings"].setdefault("reference_size", "max")
     state["settings"].setdefault("skill", "auto")
     state["settings"].setdefault("performance_mode", "singing")

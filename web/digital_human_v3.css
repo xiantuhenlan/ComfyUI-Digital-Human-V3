@@ -539,3 +539,16 @@
 .dh3-run-settings label{display:flex;align-items:center;gap:7px;white-space:nowrap}
 .dh3-run-settings input[type="number"]{width:54px;height:28px;border:1px solid #2a4855;border-radius:4px;background:#091921;padding:3px 6px}
 @media(max-width:1400px){.dh3-run-monitor{width:clamp(300px,34vw,480px);font-size:11px}.dh3-hardware-row [data-run-hardware]{gap:5px}}
+
+/* Nine equal reference cards: three columns and three rows use the whole panel. */
+.dh3-overlay .dh3-thumbs{display:grid;inset:6px;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(3,minmax(84px,1fr));grid-auto-rows:minmax(84px,1fr);align-content:stretch;gap:7px;overflow-x:hidden;overflow-y:auto}
+.dh3-overlay .dh3-thumbs figure{display:grid;grid-template-rows:minmax(0,1fr) 20px;width:100%;height:100%;min-width:0;min-height:0;border:1px solid #294852;border-radius:5px;background:#0b1c25;overflow:hidden}
+.dh3-ref-image{position:relative;min-width:0;min-height:0}
+.dh3-overlay .dh3-thumbs .dh3-ref-image>img{display:block;width:100%;height:100%;object-fit:contain;border-radius:0;background:#06131b}
+.dh3-overlay .dh3-thumbs figcaption{min-width:0;padding:2px 4px;font-size:10px;line-height:16px}
+.dh3-thumbs .dh3-ref-global{position:absolute;left:3px;bottom:3px;display:inline-flex;align-items:center;gap:3px;padding:2px 4px;border:1px solid #3a5c66;border-radius:4px;background:#091921e8;color:#d6e6eb;font-size:11px;line-height:16px;white-space:nowrap;cursor:pointer}
+.dh3-ref-global input{width:13px;height:13px;margin:0;accent-color:#27bdb5;cursor:pointer}
+.dh3-overlay .dh3-thumbs .dh3-ref-remove{position:absolute;right:2px;top:2px;width:25px;height:25px;display:grid;place-items:center;padding:4px;border:1px solid #d3707c;border-radius:5px;background:#632a35;color:#fff;box-shadow:0 1px 5px #0009;cursor:pointer;touch-action:manipulation}
+.dh3-ref-remove svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+.dh3-overlay .dh3-thumbs .dh3-ref-remove:hover{background:#a33346;border-color:#ffa5ad}
+.dh3-overlay .dh3-thumbs .dh3-ref-remove:focus-visible{outline:2px solid #27d8d0;outline-offset:2px}

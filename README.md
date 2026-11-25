@@ -1,6 +1,6 @@
 # 闲兔数字人工作台 V3
 
-独立插件目录：`ComfyUI-Digital-Human-V3`。版本：`0.1.1`。
+独立插件目录：`ComfyUI-Digital-Human-V3`。版本：`0.1.2`。
 主节点：`XiantuDigitalHumanStudioV3`（闲兔｜数字人工作台 V3）。
 
 提供音频编辑、分镜切分、参考图、原始及优化后提示词、连续生成、停止、生成记录、放大前后文件管理和合并。
@@ -66,5 +66,5 @@ ZIP 中的 `分镜提示词.csv` 用于查看；恢复全部素材及设置时�
 更新清单配置：`https://raw.githubusercontent.com/xiantuhenlan/ComfyUI-Digital-Human-V3/main/plugin_manifest.json`。
 ComfyUI 包名：`comfyui-digital-human-v3`；发布者：`xiantuhenlan`。
 
-当前发布版本：`0.1.1`。GitHub 仓库、Release 和更新清单使用上述固定地址。
+当前发布版本：`0.1.2`。GitHub 仓库、Release 和更新清单使用上述固定地址。
 GitHub 发布与 ComfyUI Registry 审核分别回读确认；审核状态以 Registry 实际记录为准。

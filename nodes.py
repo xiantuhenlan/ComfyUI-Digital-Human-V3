@@ -11,7 +11,7 @@ from comfy_extras.nodes_minimax_h3 import MiniMaxH3ReferenceToVideo
 from comfy_extras.nodes_lt import LTXVConcatAVLatent, LTXVSeparateAVLatent
 from comfy_extras.nodes_lt_audio import LTXVAudioVAEEncode
 
-from .storage import project_dir, read_state, save_state
+from .storage import project_dir, read_state, save_state, reference_records
 from .execution_progress import ExecutionProgress, ProgressProxy
 
 
@@ -285,7 +285,7 @@ class XiantuDigitalHumanStudioV3:
         index = max(0, min(int(segment_index), len(segments) - 1))
         segment = segments[index]
         progress.segment_index = index
-        refs = list(segment.get("refs") or [])
+        refs = list(reference_records(state, segment))
         if not refs:
             raise ValueError("当前分镜还没有参考图。")
         tracks = list(state.get("audio_tracks") or [])
@@ -429,7 +429,7 @@ class XiantuDigitalHumanMediaV3:
             raise ValueError("工作台中还没有分镜。")
         index = max(0, min(int(segment_index), len(segments) - 1))
         segment = segments[index]
-        refs = segment.get("refs") or []
+        refs = reference_records(state, segment)
         if not refs:
             raise ValueError("当前分镜还没有参考图。")
         prompt = str(segment.get("original_prompt") or "").strip()

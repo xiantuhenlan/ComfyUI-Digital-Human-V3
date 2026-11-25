@@ -1,6 +1,6 @@
 [project]
 name = "comfyui-digital-human-v3"
-version = "0.1.1"
+version = "0.1.2"
 description = "Independent MiniMax H3 digital-human workbench with audio editing, per-shot references and prompts, local optimization, portable projects and video output management."
 readme = "README.md"
 license = { file = "LICENSE" }
